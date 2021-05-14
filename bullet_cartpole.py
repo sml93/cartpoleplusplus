@@ -37,9 +37,11 @@ def add_opts(parser):
   parser.add_argument('--reward-calc', type=str, default='fixed',
                       help="'fixed': 1 per step. 'angle': 2*max_angle - ox - oy. 'action': 1.5 - |action|. 'angle_action': both angle and action")
 
+
 def state_fields_of_pose_of(body_id):
   (x,y,z), (a,b,c,d) = p.getBasePositionAndOrientation(body_id)
   return np.array([x,y,z,a,b,c,d])
+
 
 class BulletCartpole(gym.Env):
 
@@ -50,11 +52,10 @@ class BulletCartpole(gym.Env):
     self.max_episode_len = opts.max_episode_len
 
     # threshold for pole position.
-    # if absolute x or y moves outside this we finish episode
+    # if absolute x or y moves outside this, we finish episode
     self.pos_threshold = 2.0  # TODO: higher?
 
-    # threshold for angle from z-axis.
-    # if x or y > this value we finish episode.
+    # threshold for angle from z-axis. If x or y > this value we finish episode.
     self.angle_threshold = 0.3  # radians; ~= 12deg
 
     # force to apply per action simulation step.
@@ -72,7 +73,7 @@ class BulletCartpole(gym.Env):
     self.initial_force_steps = 30
 
     # whether we do initial push in a random direction
-    # if false we always push with along x-axis (simplee problem, useful for debugging)
+    # if false we always push with along x-axis (simple problem, useful for debugging)
     self.random_theta = not opts.no_random_theta
 
     # true if action space is discrete; 5 values; no push, left, right, up & down

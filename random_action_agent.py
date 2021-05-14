@@ -39,7 +39,7 @@ for _ in xrange(opts.num_eval):
     total_reward += reward
     if opts.max_episode_len is not None and steps > opts.max_episode_len:
       break
-  print total_reward
+  print(total_reward)
 
 env.reset()  # hack to flush last event log if required
 
