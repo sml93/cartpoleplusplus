@@ -140,9 +140,12 @@ class BulletCartpole(gym.Env):
     # setup bullet
     p.connect(p.GUI if self.gui else p.DIRECT)
     p.setGravity(0, 0, -9.81)
+    ''' Amending the first set of tuple will tell it where to place the object, second tuple is the orientation of it'''
     p.loadURDF("models/ground.urdf", 0,0,0, 0,0,0,1)
-    self.cart = p.loadURDF("models/cart.urdf", 0,0,0.08, 0,0,0,1)
-    self.pole = p.loadURDF("models/pole.urdf", 0,0,0.35, 0,0,0,1)
+    self.cart = p.loadURDF("models/cart.urdf", 0,0,0.08, 0,0,0,1)  #To change to a fluid and its params, change inside the urdf
+    self.pole = p.loadURDF("models/pole.urdf", 0,0,0.35, 0,0,0,1)  #To change to a UAV and its params, change inside the urdf
+    # self.cart = p.loadURDF("models/cart.urdf", 0,0,0.35, 0,0,0,1)
+    # self.pole = p.loadURDF("models/pole.urdf", 0,0,0.08, 0,0,0,1)
 
   def configure(self, display=None):
     pass
@@ -265,6 +268,8 @@ class BulletCartpole(gym.Env):
     # reset pole on cart in starting poses
     p.resetBasePositionAndOrientation(self.cart, (0,0,0.08), (0,0,0,1))
     p.resetBasePositionAndOrientation(self.pole, (0,0,0.35), (0,0,0,1))
+    # p.resetBasePositionAndOrientation(self.cart, (0,0,0.35), (0,0,0,1))
+    # p.resetBasePositionAndOrientation(self.pole, (0,0,0.08), (0,0,0,1))
     for _ in range(100): p.stepSimulation()
 
     # give a fixed force push in a random direction to get things going...
