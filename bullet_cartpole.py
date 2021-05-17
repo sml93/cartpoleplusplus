@@ -35,7 +35,8 @@ def add_opts(parser):
   parser.add_argument('--render-height', type=int, default=50,
                       help="if --use-raw-pixels render with this height")
   parser.add_argument('--reward-calc', type=str, default='fixed',
-                      help="'fixed': 1 per step. 'angle': 2*max_angle - ox - oy. 'action': 1.5 - |action|. 'angle_action': both angle and action")
+                      help="'fixed': 1 per step. 'angle': 2*max_angle - ox - oy. 'action': 1.5 - |action|."
+                           "'angle_action': both angle and action")
 
 
 def state_fields_of_pose_of(body_id):
