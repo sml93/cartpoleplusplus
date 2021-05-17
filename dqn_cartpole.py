@@ -24,7 +24,7 @@ parser.add_argument('--load-file', type=str, default=None)
 parser.add_argument('--save-file', type=str, default=None)
 bullet_cartpole.add_opts(parser)
 opts = parser.parse_args()
-print "OPTS", opts
+print("OPTS", opts)
 
 ENV_NAME = 'BulletCartpole'
 
@@ -45,14 +45,14 @@ model.add(Dense(nb_actions))
 model.add(Activation('linear'))
 print(model.summary())
 
-memory = SequentialMemory(limit=50000)
+memory = SequentialMemory(limit=50000, window_length=1)
 policy = BoltzmannQPolicy()
 dqn = DQNAgent(model=model, nb_actions=nb_actions, memory=memory, nb_steps_warmup=10,
                target_model_update=1e-2, policy=policy)
 dqn.compile(Adam(lr=1e-3), metrics=['mae'])
 
 if opts.load_file is not None:
-  print "loading weights from from [%s]" % opts.load_file
+  print("loading weights from from [%s]" % opts.load_file)
   dqn.load_weights(opts.load_file)
 
 # Okay, now it's time to learn something! We visualize the training here for show, but this
@@ -62,7 +62,7 @@ dqn.fit(env, nb_steps=opts.num_train, visualize=True, verbose=2)
 
 # After training is done, we save the final weights.
 if opts.save_file is not None:
-  print "saving weights to [%s]" % opts.save_file
+  print("saving weights to [%s]" % opts.save_file)
   dqn.save_weights(opts.save_file, overwrite=True)
 
 # Finally, evaluate our algorithm for 5 episodes.
