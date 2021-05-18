@@ -62,7 +62,7 @@ class BulletCartpole(gym.Env):
         '''
         Threshold for angle from z-axis. If x or y > this, end episode.
         '''
-        self.angle_threshold = 0.3  #radians (approx. 17 degrees)
+        self.angle_threshold = 0.3  # radians (approx. 17 degrees)
 
         '''
         Force to apply per action simulation step.
@@ -255,6 +255,88 @@ class BulletCartpole(gym.Env):
         # Return observation
         return np.copy(self.state), reward, self.done, info
 
+    def render_rgb(self, camera_idx):
+        cameraPos = [(0.0, 0.75, 0.75), (0.75, 0.0, 0.75)][camera_idx]
+        targetPos = (0, 0, 0.3)
+        cameraUp = (0, 0, 1)
+        nearVal, farVal = 1, 20
+        fov = 60
+        _w, _h, rgba, _depth, _objects = p.renderImage(self.render_width, self.render_height,
+                                                       cameraPos, targetPos, cameraUp,
+                                                       nearVal, farVal, fov)
+        '''
+        Convert from 1d uint8 to array to (H,W,3) hacky hardcode whitened float16 array.
+        And normalise 0 -> 1 whiten later
+        '''
+        rgba_img = np.reshape(np.asarray(rgba, dtype=np.float16),
+                              (self.render_height, self.render_width, 4))
+        rgb_img = rgba_img[:, :, :3]
+        rgb_img /= 255
+        return rgb_img
+
+    def set_state_element_for_repeat(self, repeat):
+        if self.use_raw_pixels:
+            '''
+            High dim cases (H, W, 3, C, R)
+            H, W, 3 -> height x width, 3 channel RGB image
+            C -> camera idx: 0 or 1
+            R -> repeat
+            '''
+            for camera_idx in range(self.num_cameras):
+                self.state[:, :, :, camera_idx, repeat] = self.render_rgb(camera_idx)
+        else:
+            '''
+            Low dim case states is (R, 2, 7)
+            R -> repeat, 2 -> 2 object (cart, pole), 7 -> 7d pose
+            '''
+            self.state[repeat][0] = state_fields_of_pose_of(self.cart)
+            self.state[repeat][1] = state_fields_of_pose_of(self.pole)
+
+    def reset(self):
+        '''
+        Reset state
+        '''
+        self.steps = 0
+        self.done = False
+
+        '''
+        Reset pole on cart in starting poses
+        '''
+        p.resetBasePositionAndOrientation(self.cart, (0, 0, 0.8), (0, 0, 0, 1))  # 2nd tuple is orientation
+        p.resetBasePositionAndOrientation(self.pole, (0, 0, 0.35), (0, 0, 0, 1))
+
+        for _ in range(100): p.stepSimulation()
+
+        '''
+        Give a fixed force push in a random direction to get things going
+        '''
+        theta = (np.random.random() * 2 * np.pi) if self.random_theta else 0.0
+        fx, fy = self.initial_force * np.cos(theta), self.initial_force * np.sin(theta)
+
+        for _ in range(self.initial_force_steps):
+            p.stepSimulation()
+            # this is the part where the force is applied onto, can try to change onto the pole
+            p.applyExternalForce(self.cart, -1, (fx, fy, 0), (0, 0, 0), p.WORLD_FRAME)
+            if self.delay > 0:
+                time.sleep(self.delay)
+
+        '''
+        Bootstrap state by running for all repeats
+        '''
+        for i in range(self.repeats):
+            self.set_state_element_for_repeat(i)
+
+        '''
+        Reset event log (if applicable) and add entry with only state 
+        '''
+        if self.event_log:
+            self.event_log.reset()
+            self.event_log.add_just_state(self.state)
+
+        '''
+        Return this state
+        '''
+        return np.copy(self.state)
 
 
 
