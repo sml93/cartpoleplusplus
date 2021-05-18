@@ -168,10 +168,12 @@ class BulletCartpole(gym.Env):
         second tuple is the orientation of it
         '''
         p.loadURDF("models/ground.urdf", 0, 0, 0, 0, 0, 0, 1)
-        self.cart = p.loadURDF("models/cart.urdf", 0, 0, 0.08, 0, 0, 0,
-                               1)  # To change to a fluid and its params, change inside the urdf
-        self.pole = p.loadURDF("models/pole.urdf", 0, 0, 0.35, 0, 0, 0,
-                               1)  # To change to a UAV and its params, change inside the urdf
+        self.cart = p.loadURDF("models/cart.urdf", 0, 0, 0.08,
+                               0, 0, 0, 1)  # To change to a fluid and its params, change inside the urdf
+        self.pole = p.loadURDF("models/pole.urdf", 0, 0, 0.35,
+                               0, 0, 0, 1)  # To change to a UAV and its params, change inside the urdf
+        self.uav = p.loadURDF("models/cart.urdf", 0, 0, 0.45,
+                              0, 0, 0, 1)  # Test UAV
         # self.cart = p.loadURDF("models/cart.urdf", 0,0,0.35, 0,0,0,1)
         # self.pole = p.loadURDF("models/pole.urdf", 0,0,0.08, 0,0,0,1)
 
@@ -304,8 +306,10 @@ class BulletCartpole(gym.Env):
         '''
         p.resetBasePositionAndOrientation(self.cart, (0, 0, 0.8), (0, 0, 0, 1))  # 2nd tuple is orientation
         p.resetBasePositionAndOrientation(self.pole, (0, 0, 0.35), (0, 0, 0, 1))
+        p.resetBasePositionAndOrientation(self.uav, (0, 0, 0.45), (0, 0, 0, 1))
 
-        for _ in range(100): p.stepSimulation()
+        for _ in range(100):
+            p.stepSimulation()
 
         '''
         Give a fixed force push in a random direction to get things going
@@ -315,7 +319,7 @@ class BulletCartpole(gym.Env):
 
         for _ in range(self.initial_force_steps):
             p.stepSimulation()
-            # this is the part where the force is applied onto, can try to change onto the pole
+            ''' this is the part where the force is applied onto, can try to change onto the pole '''
             p.applyExternalForce(self.cart, -1, (fx, fy, 0), (0, 0, 0), p.WORLD_FRAME)
             if self.delay > 0:
                 time.sleep(self.delay)
