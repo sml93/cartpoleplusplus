@@ -14,7 +14,7 @@ from rl.agents.dqn import DQNAgent
 from rl.policy import BoltzmannQPolicy
 from rl.memory import SequentialMemory
 
-import bullet_cartpole
+import bullet_cartpole_revisited
 import argparse
 
 parser = argparse.ArgumentParser()
@@ -22,14 +22,14 @@ parser.add_argument('--num-train', type=int, default=100)
 parser.add_argument('--num-eval', type=int, default=0)
 parser.add_argument('--load-file', type=str, default=None)
 parser.add_argument('--save-file', type=str, default=None)
-bullet_cartpole.add_opts(parser)
+bullet_cartpole_revisited.add_opts(parser)
 opts = parser.parse_args()
 print("OPTS", opts)
 
 ENV_NAME = 'BulletCartpole'
 
 # Get the environment and extract the number of actions.
-env = bullet_cartpole.BulletCartpole(opts=opts, discrete_actions=True)
+env = bullet_cartpole_revisited.BulletCartpole(opts=opts, discrete_actions=True)
 nb_actions = env.action_space.n
 
 # Next, we build a very simple model.
