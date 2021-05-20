@@ -167,10 +167,10 @@ class BulletCartpole(gym.Env):
         Amending the first set of tuple will tell it where to place the object,
         second tuple is the orientation of it
         '''
-        p.loadURDF("models/ground.urdf", 0, 0, 0, 0, 0, 0, 1)
-        self.cart = p.loadURDF("models/poc.urdf", 0, 0, 0.08,
+        p.loadURDF("models/ground.urdf", 0,0,0, 0,0,0,1)
+        self.cart = p.loadURDF("models/poc.urdf", 0, 0, 0.1,
                                0, 0, 0, 1)  # To change to a fluid and its params, change inside the urdf
-        self.pole = p.loadURDF("models/uav_fluid.urdf", 0, 0, 0.25,
+        self.pole = p.loadURDF("models/uav_fluid.urdf", 0, 0, 0.15,
                                0, 0, 0, 1)  # To change to a UAV and its params, change inside the urdf
         # self.uav = p.loadURDF("models/cart.urdf", 0, 0, 0.9,
         #                       0, 0, 0, 1)  # Test UAV
@@ -306,7 +306,7 @@ class BulletCartpole(gym.Env):
         Reset pole on cart in starting poses
         '''
         p.resetBasePositionAndOrientation(self.cart, (0, 0, 0.08), (0, 0, 0, 1))  # 2nd tuple is orientation
-        p.resetBasePositionAndOrientation(self.pole, (0, 0, 0.25), (0, 0, 0, 1))
+        p.resetBasePositionAndOrientation(self.pole, (0, 0, 0.12), (0, 0, 0, 1))
         # p.resetBasePositionAndOrientation(self.uav, (0, 0, 0.9), (0, 0, 0, 1))
 
         for _ in range(100):
