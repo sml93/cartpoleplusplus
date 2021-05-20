@@ -62,7 +62,7 @@ class BulletCartpole(gym.Env):
         '''
         Threshold for angle from z-axis. If x or y > this, end episode.
         '''
-        self.angle_threshold = 0.3  # radians (approx. 17 degrees)
+        self.angle_threshold = 0.4  # radians (approx. 11.46 degrees)
 
         '''
         Force to apply per action simulation step.
@@ -168,10 +168,12 @@ class BulletCartpole(gym.Env):
         second tuple is the orientation of it
         '''
         p.loadURDF("models/ground.urdf", 0,0,0, 0,0,0,1)
-        self.cart = p.loadURDF("models/poc.urdf", 0, 0, 0.1,
+        self.cart = p.loadURDF("models/poc.urdf", 0, 0, 0.12,
                                0, 0, 0, 1)  # To change to a fluid and its params, change inside the urdf
         self.pole = p.loadURDF("models/uav_fluid.urdf", 0, 0, 0.15,
                                0, 0, 0, 1)  # To change to a UAV and its params, change inside the urdf
+        self.car = p.loadURDF("models/simplecar.urdf", 1, 1, 0.12,
+                               0, 0, 0, 1)
         # self.uav = p.loadURDF("models/cart.urdf", 0, 0, 0.9,
         #                       0, 0, 0, 1)  # Test UAV
         # self.cart = p.loadURDF("models/cart.urdf", 0,0,0.35, 0,0,0,1)
@@ -305,8 +307,9 @@ class BulletCartpole(gym.Env):
         '''
         Reset pole on cart in starting poses
         '''
-        p.resetBasePositionAndOrientation(self.cart, (0, 0, 0.08), (0, 0, 0, 1))  # 2nd tuple is orientation
-        p.resetBasePositionAndOrientation(self.pole, (0, 0, 0.12), (0, 0, 0, 1))
+        p.resetBasePositionAndOrientation(self.cart, (0, 0, 0.12), (0, 0, 0, 1))  # 2nd tuple is orientation
+        p.resetBasePositionAndOrientation(self.pole, (0, 0, 0.15), (0, 0, 0, 1))
+        p.resetBasePositionAndOrientation(self.car, (1, 1, 0.12), (0, 0, 0, 1))
         # p.resetBasePositionAndOrientation(self.uav, (0, 0, 0.9), (0, 0, 0, 1))
 
         for _ in range(100):
