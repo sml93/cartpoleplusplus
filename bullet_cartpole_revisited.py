@@ -7,6 +7,7 @@ import time
 import numpy as np
 import pybullet as p
 
+from models.simplecar import UAV
 from gym import spaces
 
 np.set_printoptions(precision=3, suppress=True, linewidth=10000)
@@ -170,10 +171,10 @@ class BulletCartpole(gym.Env):
         p.loadURDF("models/ground.urdf", 0,0,0, 0,0,0,1)
         self.cart = p.loadURDF("models/poc.urdf", 0, 0, 0.12,
                                0, 0, 0, 1)  # To change to a fluid and its params, change inside the urdf
-        self.pole = p.loadURDF("models/uav_fluid.urdf", 0, 0, 0.15,
-                               0, 0, 0, 1)  # To change to a UAV and its params, change inside the urdf
-        self.car = p.loadURDF("models/simplecar.urdf", 1, 1, 0.12,
-                               0, 0, 0, 1)
+        # self.pole = p.loadURDF("models/uav_fluid.urdf", 0, 0, 0.15,
+        #                        0, 0, 0, 1)  # To change to a UAV and its params, change inside the urdf
+        # self.car = p.loadURDF("models/simplecar.urdf", 1, 1, 0.12,
+        #                        0, 0, 0, 1)
         # self.uav = p.loadURDF("models/cart.urdf", 0, 0, 0.9,
         #                       0, 0, 0, 1)  # Test UAV
         # self.cart = p.loadURDF("models/cart.urdf", 0,0,0.35, 0,0,0,1)
@@ -232,14 +233,16 @@ class BulletCartpole(gym.Env):
         Check for out of bounds by position or orientation on pole
         Fetch pose explicitly rather than depending on fields in state
         '''
-        (x, y, _z), orient = p.getBasePositionAndOrientation(self.pole)
-        ox, oy, _oz = p.getEulerFromQuaternion(orient)  # Roll / Pitch / Yaw
+        # (x, y, _z), orient = p.getBasePositionAndOrientation(self.pole)
+        # ox, oy, _oz = p.getEulerFromQuaternion(orient)  # Roll / Pitch / Yaw
+        x, y, _z, ox, oy, _oz = UAV.get_observation()
         if abs(x) > self.pos_threshold or abs(y) > self.pos_threshold:
             info['done_reason'] = 'out of position bounds'
             self.done = True
         elif abs(ox) > self.angle_threshold or abs(oy) > self.angle_threshold:
             info['done_reason'] = 'out of orientation bounds'
             self.done = True
+        UAV.apply_angle(ox)
 
         ''' Calculate reward, fixed base of 1.0 '''
         reward = 1.0
@@ -295,7 +298,7 @@ class BulletCartpole(gym.Env):
             R -> repeat, 2 -> 2 object (cart, pole), 7 -> 7d pose
             '''
             self.state[repeat][0] = state_fields_of_pose_of(self.cart)
-            self.state[repeat][1] = state_fields_of_pose_of(self.pole)
+            # self.state[repeat][1] = state_fields_of_pose_of(self.pole)
 
     def reset(self):
         '''
@@ -307,9 +310,10 @@ class BulletCartpole(gym.Env):
         '''
         Reset pole on cart in starting poses
         '''
-        p.resetBasePositionAndOrientation(self.cart, (0, 0, 0.12), (0, 0, 0, 1))  # 2nd tuple is orientation
-        p.resetBasePositionAndOrientation(self.pole, (0, 0, 0.15), (0, 0, 0, 1))
-        p.resetBasePositionAndOrientation(self.car, (1, 1, 0.12), (0, 0, 0, 1))
+        p.resetSimulation(p.connect(p.DIRECT))
+        # p.resetBasePositionAndOrientation(self.cart, (0, 0, 0.12), (0, 0, 0, 1))  # 2nd tuple is orientation
+        # p.resetBasePositionAndOrientation(self.pole, (0, 0, 0.15), (0, 0, 0, 1))
+        # p.resetBasePositionAndOrientation(self.car, (1, 1, 0.12), (0, 0, 0, 1))
         # p.resetBasePositionAndOrientation(self.uav, (0, 0, 0.9), (0, 0, 0, 1))
 
         for _ in range(100):

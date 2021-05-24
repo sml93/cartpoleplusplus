@@ -17,7 +17,7 @@ from time import sleep
 p.connect(p.GUI)
 p.setGravity(0, 0, -9.81)
 
-angle = p.addUserDebugParameter('Angle', -0.5, 0.5, 0)
+angle = p.addUserDebugParameter('Angle', -0.349, 0.785, 0)
 throttle = p.addUserDebugParameter('Throttle', 0, 20, 0)
 p.loadURDF("models/ground.urdf", [0, 0, 0.0])
 car = p.loadURDF("models/uav_fluid.urdf", [0, 0, 0.1])
@@ -33,6 +33,7 @@ while True:
     user_angle = p.readUserDebugParameter(angle)
     user_throttle = p.readUserDebugParameter(throttle)
     for joint_index in wheel_indices:
+        print(joint_index)
         p.setJointMotorControl2(car, joint_index,
                                 p.POSITION_CONTROL,
                                 targetVelocity=user_throttle)
