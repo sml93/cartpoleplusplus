@@ -1,13 +1,15 @@
 #!/usr/bin/env python
 
 from collections import *
-import os
 import gym
 import sys
 import time
 import numpy as np
 import pybullet as p
 
+from new.resources.uav import UAV
+from new.resources.ground import Ground
+from new.resources.poc import POC
 from gym import spaces
 
 np.set_printoptions(precision=3, suppress=True, linewidth=10000)
@@ -47,61 +49,15 @@ def state_fields_of_pose_of(body_id):
     return np.array([x, y, z, a, b, c, d])
 
 
-p.connect(p.DIRECT)
-
-uav = p.loadURDF(fileName="models/uav_fluid.urdf",
-                 basePosition=(0, 0, 0.15),
-                 baseOrientation=(0, 0, 0, 1))
-
-ground = p.loadURDF(fileName="models/ground.urdf",
-                    basePosition=(0, 0, 0.15),
-                    baseOrientation=(0, 0, 0, 1))
-
-poc = p.loadURDF(fileName="models/poc.urdf",
-                 basePosition=(0, 0, 0.15),
-                 baseOrientation=(0, 0, 0, 1))
-#ok
-
-
-class UAV:
-    """ class for UAVwFluid """
-    def __init__(self):
-        # Joint indx as found by p.getJointInfo()
-        self.uav = None
-        self.ground = None
-        self.joint = 0
-        self.joint_spd = 0
-        self.c_drag = 0.01
-        self.angle = 0.
-        self.client = p.connect(p.DIRECT)
-        self.uav = uav
-
-    def get_ids(self):
-        return self.uav, self.client
-
-    def apply_angle(self, ang):
-        """ Expects action to be 90 - tilt angle of the fluid (beta) """
-        # ang -= (pi/2)
-        # self.angle = max(min(ang, -0.349), 0.785)
-        self.angle = ang - (np.pi/4)
-        p.setJointMotorControl2(self.uav, self.joint,
-                                controlMode=p.POSITION_CONTROL,
-                                targetPosition=self.angle)
-
-    def get_observation(self):
-        (x, y, z), orient = p.getBasePositionAndOrientation(self.uav, self.client)
-        ox, oy, oz = p.getEulerFromQuaternion(orient)  # Row / Pitch / Yaw
-        return x, y, z, ox, oy, oz
-
-
 class BulletCartpole(gym.Env):
     def __init__(self, opts, discrete_actions):
         self.gui = opts.gui
         self.delay = opts.delay if self.gui else 0.0
-        self.client = p.connect(p.DIRECT)
-        self.pole = uav
-        self.cart = poc
-        ground
+        self.client = p.connect(self.gui)
+        self.joint = [0]
+        self.pole = UAV(self.client)
+        self.cart = POC(self.client)
+        Ground(self.client)
 
         self.max_episode_len = opts.max_episode_len
 
@@ -284,17 +240,18 @@ class BulletCartpole(gym.Env):
         Check for out of bounds by position or orientation on pole
         Fetch pose explicitly rather than depending on fields in state
         '''
-        (x, y, _z), orient = p.getBasePositionAndOrientation(self.pole)
-        ox, oy, _oz = p.getEulerFromQuaternion(orient)  # Roll / Pitch / Yaw
+        # (x, y, _z), orient = p.getBasePositionAndOrientation(self.pole)
+        # ox, oy, _oz = p.getEulerFromQuaternion(orient)  # Roll / Pitch / Yaw
+        x, y, _z, ox, oy, _oz = self.pole.get_obs()
         if abs(x) > self.pos_threshold or abs(y) > self.pos_threshold:
             info['done_reason'] = 'out of position bounds'
             self.done = True
         elif abs(ox) > self.angle_threshold or abs(oy) > self.angle_threshold:
             info['done_reason'] = 'out of orientation bounds'
             self.done = True
-        uavFluid = UAV()
-        uavFluid.apply_angle(oy)
-        # p.stepSimulation()
+        for joint_index in self.joint:
+            self.pole.apply_angle(oy,joint_index)
+        p.stepSimulation()
 
         ''' Calculate reward, fixed base of 1.0 '''
         reward = 1.0
@@ -363,7 +320,7 @@ class BulletCartpole(gym.Env):
         Reset pole on cart in starting poses
         '''
         p.resetBasePositionAndOrientation(self.cart, (0, 0, 0.12), (0, 0, 0, 1))  # 2nd tuple is orientation
-        p.resetBasePositionAndOrientation(self.pole, (0, 0, 0.15), (0, 0, 0, 1))
+        p.resetBasePositionAndOrientation(self.pole.uav, (0, 0, 0.15), (0, 0, 0, 1))
         # p.resetBasePositionAndOrientation(self.car, (1, 1, 0.12), (0, 0, 0, 1))
         # p.resetBasePositionAndOrientation(self.uav, (0, 0, 0.9), (0, 0, 0, 1))
 
