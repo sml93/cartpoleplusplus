@@ -46,10 +46,42 @@ def state_fields_of_pose_of(body_id):
     return np.array([x, y, z, a, b, c, d])
 
 
+class UAV:
+    """ class for UAVwFluid """
+    def __init__(self, uav, client):
+        # Joint indx as found by p.getJointInfo()
+        self.uav = None
+        self.ground = None
+        self.joint = 0
+        self.joint_spd = 0
+        self.c_drag = 0.01
+        self.angle = 0.
+        self.client = client
+        self.uav = uav
+
+    def get_ids(self):
+        return self.uav, self.client
+
+    def apply_angle(self, ang):
+        """ Expects action to be 90 - tilt angle of the fluid (beta) """
+        # ang -= (pi/2)
+        # self.angle = max(min(ang, -0.349), 0.785)
+        self.angle = ang - (np.pi/4)
+        p.setJointMotorControl2(self.uav, self.joint,
+                                controlMode=p.POSITION_CONTROL,
+                                targetPosition=self.angle)
+
+    def get_observation(self):
+        (x, y, z), orient = p.getBasePositionAndOrientation(self.uav, self.client)
+        ox, oy, oz = p.getEulerFromQuaternion(orient)  # Row / Pitch / Yaw
+        return x, y, z, ox, oy, oz
+
+
 class BulletCartpole(gym.Env):
     def __init__(self, opts, discrete_actions):
         self.gui = opts.gui
         self.delay = opts.delay if self.gui else 0.0
+        self.client = p.connect(p.GUI)
 
         self.max_episode_len = opts.max_episode_len
 
@@ -168,12 +200,12 @@ class BulletCartpole(gym.Env):
         second tuple is the orientation of it
         '''
         p.loadURDF("models/ground.urdf", 0,0,0, 0,0,0,1)
-        self.cart = p.loadURDF("models/poc.urdf", 0, 0, 0.12,
+        self.cart = p.loadURDF("models/poc.urdf", 0, 0, 0.1,
                                0, 0, 0, 1)  # To change to a fluid and its params, change inside the urdf
         self.pole = p.loadURDF("models/uav_fluid.urdf", 0, 0, 0.15,
                                0, 0, 0, 1)  # To change to a UAV and its params, change inside the urdf
-        self.car = p.loadURDF("models/simplecar.urdf", 1, 1, 0.12,
-                               0, 0, 0, 1)
+        #self.car = p.loadURDF("models/simplecar.urdf", 1, 1, 0.12,
+        #                       0, 0, 0, 1)
         # self.uav = p.loadURDF("models/cart.urdf", 0, 0, 0.9,
         #                       0, 0, 0, 1)  # Test UAV
         # self.cart = p.loadURDF("models/cart.urdf", 0,0,0.35, 0,0,0,1)
@@ -232,6 +264,10 @@ class BulletCartpole(gym.Env):
         Check for out of bounds by position or orientation on pole
         Fetch pose explicitly rather than depending on fields in state
         '''
+        move = UAV(self.pole, self.client)
+        x, y, _z, ox, oy, _oz = move.get_observation()
+        #print (x, y, ox, oy)
+        move.apply_angle(oy)
         (x, y, _z), orient = p.getBasePositionAndOrientation(self.pole)
         ox, oy, _oz = p.getEulerFromQuaternion(orient)  # Roll / Pitch / Yaw
         if abs(x) > self.pos_threshold or abs(y) > self.pos_threshold:
@@ -307,9 +343,9 @@ class BulletCartpole(gym.Env):
         '''
         Reset pole on cart in starting poses
         '''
-        p.resetBasePositionAndOrientation(self.cart, (0, 0, 0.12), (0, 0, 0, 1))  # 2nd tuple is orientation
+        p.resetBasePositionAndOrientation(self.cart, (0, 0, 0.1), (0, 0, 0, 1))  # 2nd tuple is orientation
         p.resetBasePositionAndOrientation(self.pole, (0, 0, 0.15), (0, 0, 0, 1))
-        p.resetBasePositionAndOrientation(self.car, (1, 1, 0.12), (0, 0, 0, 1))
+        # p.resetBasePositionAndOrientation(self.car, (1, 1, 0.12), (0, 0, 0, 1))
         # p.resetBasePositionAndOrientation(self.uav, (0, 0, 0.9), (0, 0, 0, 1))
 
         for _ in range(100):
@@ -345,6 +381,3 @@ class BulletCartpole(gym.Env):
         Return this state
         '''
         return np.copy(self.state)
-
-
-
